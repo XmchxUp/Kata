@@ -1,5 +1,4 @@
 ### LeetCode
-![Alt text](./res/image.png)
 
 
 ### Res
