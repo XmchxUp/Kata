@@ -22,7 +22,7 @@ class Trie:
             if ch not in node.chs:
                 return False
             node = node.chs[ch]
-        return True
+        return node.is_word
 
     def startsWith(self, prefix: str) -> bool:
         node = self.root
@@ -30,12 +30,4 @@ class Trie:
             if ch not in node.chs:
                 return False
             node = node.chs[ch]
-        return len(node.chs) > 0
-
-
-# Your Trie object will be instantiated and called as such:
-obj = Trie()
-obj.insert("word")
-print(obj.search("word"))
-print(obj.startsWith("wor"))
-print(obj.startsWith("d"))
+        return len(node.chs) > 0 or node.is_word
