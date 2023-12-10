@@ -34,3 +34,44 @@ class Solution:
             email_to_ids[uf.find(email)].append(email)
 
         return [[email_to_name[v[0]]] + sorted(v) for v in email_to_ids.values()]
+
+    def accountsMergeV2(self, accounts: List[List[str]]) -> List[List[str]]:
+        """抽象成图遍历问题，使用dfs"""
+        graph = defaultdict(set)
+        email_to_name = {}
+        for account in accounts:
+            name = account[0]
+            for email in account[1:]:
+                graph[account[1]].add(email)
+                graph[email].add(account[1])
+                email_to_name[email] = name
+
+        visisted = set()
+        res = []
+        for email in graph:
+            if email in visisted:
+                continue
+            q = [email]
+            curr = []
+            while q:
+                node = q.pop(0)
+                if node in visisted:
+                    continue
+                visisted.add(node)
+                curr.append(node)
+                for nei in graph[node]:
+                    q.append(nei)
+            res.append([email_to_name[email]] + sorted(curr))
+        return res
+
+
+print(
+    Solution().accountsMergeV2(
+        [
+            ["John", "johnsmith@mail.com", "john_newyork@mail.com"],
+            ["John", "johnsmith@mail.com", "john00@mail.com"],
+            ["Mary", "mary@mail.com"],
+            ["John", "johnnybravo@mail.com"],
+        ]
+    )
+)
