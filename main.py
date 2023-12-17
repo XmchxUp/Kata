@@ -55,7 +55,6 @@ def update_records(issue, issue_number=None):
             lines[existing_issue_index] = new_line
         else:
             lines.insert(table_start_index, new_line)
-
     with open("README.md", "w") as file:
         file.writelines(lines)
 
