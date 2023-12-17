@@ -24,5 +24,5 @@ class Solution:
 ---
 
 * Link: https://github.com/XmchxUp/Kata/issues/1
-* Labels: `Quick Select`
+* Labels: `快速选择`
 * Creation Date: 2023-12-17T12:36:18Z
