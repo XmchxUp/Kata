@@ -56,5 +56,5 @@ class Solution:
 ---
 
 * Link: https://github.com/XmchxUp/Kata/issues/1
-* Labels: `快速选择`
+* Labels: `Quick Select`
 * Creation Date: 2023-12-17T12:36:18Z
