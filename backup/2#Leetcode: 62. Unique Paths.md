@@ -17,5 +17,5 @@ class Solution:
 ---
 
 * Link: https://github.com/XmchxUp/Kata/issues/2
-* Labels: `dp`
+* Labels: `bug`, `dp`
 * Creation Date: 2024-01-01T01:08:15Z
