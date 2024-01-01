@@ -30,6 +30,7 @@
 
 |#|Title|Tag|Date|
 |:-:|:-:|:-:|:-:|
+|4|[LeetCode 54. Spiral Matrix](https://github.com/XmchxUp/Kata/issues/4)|`simulation`|2024-01-01T05:53:43Z|
 |3|[LeetCode: 455. Assign Cookies](https://github.com/XmchxUp/Kata/issues/3)|`greedy`|2024-01-01T01:17:41Z|
 |2|[Leetcode: 62. Unique Paths](https://github.com/XmchxUp/Kata/issues/2)|`dp`|2024-01-01T01:08:15Z|
 |1|[Leetcode: Kth Largest Element in an Array](https://github.com/XmchxUp/Kata/issues/1)|`快速选择`|2023-12-17T12:36:18Z|
