@@ -1,32 +1,26 @@
+from typing import List
 from heapq import heappush, heappop
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 # 桶排序
 # Time Complexity O(n)
 # Space Complexity O(n)
 class Solution2(object):
-    def topKFrequent(self, nums, k):
-        """
-        :type nums: List[int]
-        :type k: int
-        :rtype: List[int]
-        """
-        m = dict()
-        for num in nums:
-            if num not in m:
-                m[num] = 0
-            m[num] += 1
-        tmpArr = [[] for _ in range((len(nums) + 1))]
-        for num, freq in m.items():
-            tmpArr[freq].append(num)
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+        d = defaultdict(int)
+        for n in nums:
+            d[n] += 1
+        freq_arr = [[] for _ in range(len(nums) + 1)]
+        for num, freq in d.items():
+            freq_arr[freq].append(num)
         res = []
         size = k
-        for i in range(len(tmpArr) - 1, 0, -1):
+        for i in range(len(freq_arr) - 1, 0, -1):
             if k == 0:
                 break
-            if tmpArr[i]:
-                res += tmpArr[i]
+            if len(freq_arr[i]) > 0:
+                res += freq_arr[i]
                 k -= 1
         return res[:size]
 
