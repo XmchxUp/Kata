@@ -17,23 +17,11 @@ type clueDirInfo struct {
 	step       int
 }
 
-// var n = 4
-// var clues = []int{0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0}
-
 var n = 6
-
-// var clues = []int{0, 3, 0, 5, 3, 4, 0, 0, 0, 0, 0, 1, 0, 3, 0, 3, 2, 3, 3, 2, 0, 3, 1, 0}
-
 var clues = []int{3, 2, 2, 3, 2, 1,
 	1, 2, 3, 3, 2, 2,
 	5, 1, 2, 2, 4, 3,
 	3, 2, 1, 2, 2, 4}
-
-// var n = 7
-// var clues = [][]int{
-// 	{7, 0, 0, 0, 2, 2, 3, 0, 0, 3, 0, 0, 0, 0, 3, 0, 3, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 4},
-// 	{0, 2, 3, 0, 2, 0, 0, 5, 0, 4, 5, 0, 4, 0, 0, 4, 2, 0, 0, 0, 6, 5, 2, 2, 2, 2, 4, 1},
-// }
 
 var clueDirInfos = []clueDirInfo{
 	{isCheckRow: false, start: 0, end: n, step: 1},
@@ -43,17 +31,24 @@ var clueDirInfos = []clueDirInfo{
 }
 
 var possibleValues [][][]bool
+var rowBitMaps, colBitMaps []BitMap
 
-func canPlace(grid [][]int, row, col, height int) bool {
-	for i := 0; i < n; i++ {
-		if grid[row][i] == height && i != col {
-			return false
-		}
-		if grid[i][col] == height && i != row {
-			return false
-		}
+type BitMap uint32
+
+func (b *BitMap) Set(key int, value bool) {
+	if value {
+		*b = *b | (1 << key)
+	} else {
+		*b = *b & (^(1 << key))
 	}
-	return true
+}
+
+func (b *BitMap) HasKey(key int) bool {
+	return (*b & (1 << key)) != 0
+}
+
+func canPlace(row, col, height int) bool {
+	return !(rowBitMaps[row].HasKey(height) || colBitMaps[col].HasKey(height))
 }
 
 func getClueInfo(idx int) clueDirInfo {
@@ -107,10 +102,20 @@ func getCount(grid [][]int, idx int) int {
 	return cnt
 }
 
-func isValidate(grid [][]int, clues []int) bool {
+func isValidate(grid [][]int, clues []int, row, col int, fullCheck bool) bool {
+	relativeCluesIdx := []int{
+		col, 6 + row, 17 - col, 23 - row,
+	}
+
 	for idx, clue := range clues {
 		if clue == 0 {
 			continue
+		}
+
+		if !fullCheck {
+			if idx != relativeCluesIdx[0] || idx != relativeCluesIdx[1] || idx != relativeCluesIdx[2] || idx != relativeCluesIdx[3] {
+				continue
+			}
 		}
 
 		if clue != getCount(grid, idx) {
@@ -119,11 +124,12 @@ func isValidate(grid [][]int, clues []int) bool {
 	}
 
 	return true
+
 }
 
 func dfs(grid [][]int, clues []int, row, col int) bool {
 	if row == n {
-		return isValidate(grid, clues)
+		return isValidate(grid, clues, row, col, true)
 	}
 
 	nextRow, nextCol := row, col+1
@@ -141,28 +147,43 @@ func dfs(grid [][]int, clues []int, row, col int) bool {
 			continue
 		}
 
-		if canPlace(grid, row, col, height) {
+		if canPlace(row, col, height) {
 			grid[row][col] = height
-			updatePossible(row, col, height, false)
+			updateState(row, col, height, false)
+
+			if row != nextRow || col+1 != nextCol {
+				if !isValidate(grid, clues, row, col, false) {
+					grid[row][col] = 0
+					updateState(row, col, height, true)
+					continue
+				}
+			}
+
 			if dfs(grid, clues, nextRow, nextCol) {
 				return true
 			}
+
 			grid[row][col] = 0
-			updatePossible(row, col, height, true)
+			updateState(row, col, height, true)
 		}
 	}
 
 	return false
 }
 
-func updatePossible(row, col, height int, value bool) {
+func updateState(row, col, height int, canUseHeight bool) {
+	rowBitMaps[row].Set(height, !canUseHeight)
+	colBitMaps[col].Set(height, !canUseHeight)
 	for k := 0; k < n; k++ {
-		possibleValues[k][col][height] = value
-		possibleValues[row][k][height] = value
+		possibleValues[k][col][height] = canUseHeight
+		possibleValues[row][k][height] = canUseHeight
 	}
 }
 
 func preprocess(grid [][]int, clues []int) {
+	rowBitMaps = make([]BitMap, n)
+	colBitMaps = make([]BitMap, n)
+
 	possibleValues = make([][][]bool, n)
 	for i := range possibleValues {
 		possibleValues[i] = make([][]bool, n)
@@ -224,14 +245,13 @@ func preprocess(grid [][]int, clues []int) {
 	for i := range grid {
 		for j := range grid[i] {
 			if grid[i][j] != 0 {
-				updatePossible(i, j, grid[i][j], false)
+				updateState(i, j, grid[i][j], false)
 			}
 		}
 	}
 }
 
 func SolvePuzzle(clues []int) [][]int {
-	// Your code
 	grid := make([][]int, n)
 	for i := range grid {
 		grid[i] = make([]int, n)
