@@ -11,10 +11,9 @@ class Solution(object):
             if mainTank >= 5:
                 cnt = mainTank // 5
                 total_dis += 50 * cnt
-                while additionalTank and cnt:
-                    additionalTank -= 1
-                    cnt -= 1
-                    remainTank += 1
+                t = min(additionalTank, cnt)
+                additionalTank -= t
+                remainTank += t
             else:
                 total_dis += 10 * remainTank
                 remainTank = 0
