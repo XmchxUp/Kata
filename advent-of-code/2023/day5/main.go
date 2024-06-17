@@ -242,28 +242,26 @@ func getAnswer() int {
 // getAnswerOptimaze
 // 将所有操作都使用区间（交集，差集，合并），最后得出所有location的区间(排序后的)，每一个区间的start就是结果
 func getAnswerOptimaze() int {
-	// seeds-ranges.intersection(cur-level-ranges)
+	// seeds-ranges.intersection(cur-level-ranges)=tmp-ranges
 	// calculate next-level-offset-ranges
-	// seeds-ranges.difference(cur-level-ranges) = diff-seeds-ranges
+	// seeds-ranges.difference(tmp-ranges) = diff-seeds-ranges
 	// diff-seeds-ranges.union(next-level-offset-ranges) = all-next-level-ranges
 	// repeat all level
 
 	seedsRanges := Ranges{}
 	for i := 0; i < len(seeds); i += 2 {
-		seedsRanges = append(seedsRanges, Range{
-			Start: seeds[i],
-			End:   seeds[i] + seeds[i+1],
+		seedsRanges = seedsRanges.Union(Ranges{
+			Range{
+				Start: seeds[i],
+				End:   seeds[i] + seeds[i+1],
+			},
 		})
 	}
-	// fmt.Println(seedsRanges)
 
-	currentRanges := Ranges{}
-	allNextLevelRanges := Ranges{}
-
-	currentRanges = currentRanges.Union(seedsRanges)
-	fmt.Println(currentRanges)
+	currentRanges := seedsRanges
 
 	for i, name := range findSeqs {
+		fmt.Println("currentRanges:", currentRanges)
 		if i == len(findSeqs)-1 {
 			break
 		}
@@ -282,9 +280,10 @@ func getAnswerOptimaze() int {
 		tmpRanges := currentRanges.Intersection(currLevelRanges)
 
 		fmt.Println("tmpRanges:", tmpRanges)
+		allNextLevelRanges := Ranges{}
 		for _, r := range tmpRanges {
 			for _, info := range m[k].Infos {
-				if r.Start >= info.SrcStart && r.End < info.SrcStart+info.Length {
+				if r.Start >= info.SrcStart && r.End <= info.SrcStart+info.Length {
 					diff := info.DstStart - info.SrcStart
 					allNextLevelRanges = allNextLevelRanges.Union(Ranges{
 						Range{
@@ -296,12 +295,11 @@ func getAnswerOptimaze() int {
 			}
 		}
 		fmt.Println("allNextLevelRanges:", allNextLevelRanges)
+		diffRanges := currentRanges.Difference(tmpRanges)
 
-		allNextLevelRanges = allNextLevelRanges.Union(currentRanges.Difference(currLevelRanges))
+		fmt.Println("diff ranges:", diffRanges)
 
-		currentRanges = currentRanges.Union(allNextLevelRanges)
-		fmt.Println("currentRanges:", currentRanges)
-		allNextLevelRanges = Ranges{}
+		currentRanges = allNextLevelRanges.Union(diffRanges)
 	}
 
 	return currentRanges[0].Start
