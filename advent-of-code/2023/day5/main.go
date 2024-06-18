@@ -37,7 +37,7 @@ type Range struct {
 	Start, End uint64
 }
 
-// Ranges need sort
+// Ranges
 type Ranges []Range
 
 func (r Ranges) Empty() bool {
@@ -103,6 +103,8 @@ func (r Ranges) Intersection(other Ranges) Ranges {
 
 func (r Ranges) Difference(other Ranges) Ranges {
 	result := Ranges{}
+
+	(&other).merge()
 
 	for _, ra := range r {
 		currentStart := ra.Start
@@ -303,7 +305,6 @@ func getAnswerOptimaze() uint64 {
 			}
 		}
 		fmt.Println("allNextLevelRanges:", allNextLevelRanges)
-		(&tmpRanges).merge()
 		diffRanges := currentRanges.Difference(tmpRanges)
 
 		fmt.Println("diff ranges:", diffRanges)
