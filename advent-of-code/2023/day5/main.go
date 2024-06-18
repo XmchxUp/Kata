@@ -23,9 +23,9 @@ const (
 )
 
 type Info struct {
-	SrcStart int
-	DstStart int
-	Length   int
+	SrcStart uint64
+	DstStart uint64
+	Length   uint64
 }
 
 type InfoMap struct {
@@ -34,7 +34,7 @@ type InfoMap struct {
 
 // Range [start, end)
 type Range struct {
-	Start, End int
+	Start, End uint64
 }
 
 type Ranges []Range
@@ -124,21 +124,21 @@ func (r Ranges) Difference(other Ranges) Ranges {
 	return result
 }
 
-func max(a, b int) int {
+func max(a, b uint64) uint64 {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func min(a, b int) int {
+func min(a, b uint64) uint64 {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-var seeds []int
+var seeds []uint64
 var currInfoMap *InfoMap
 
 var m map[string]*InfoMap = make(map[string]*InfoMap)
@@ -170,7 +170,7 @@ func parseInput(input string) {
 			if i < 1 { // skip head
 				continue
 			}
-			v, _ := strconv.Atoi(tmp)
+			v, _ := strconv.ParseUint(tmp, 10, 0)
 			seeds = append(seeds, v)
 		}
 		return
@@ -187,21 +187,21 @@ func parseInput(input string) {
 
 		tmps := strings.Split(input, " ")
 
-		dstStart, _ := strconv.Atoi(tmps[0])
-		srcStart, _ := strconv.Atoi(tmps[1])
-		length, _ := strconv.Atoi(tmps[2])
+		dstStart, _ := strconv.ParseUint(tmps[0], 10, 0)
+		srcStart, _ := strconv.ParseUint(tmps[1], 10, 0)
+		length, _ := strconv.ParseUint(tmps[2], 10, 0)
 
 		currInfoMap.Infos = append(currInfoMap.Infos, Info{DstStart: dstStart, SrcStart: srcStart, Length: length})
 	}
 }
 
-func getPhase1Seeds() []int {
+func getPhase1Seeds() []uint64 {
 	return seeds
 }
 
-func getPhase2Seeds() <-chan int {
+func getPhase2Seeds() <-chan uint64 {
 	// 得运行多久？
-	out := make(chan int)
+	out := make(chan uint64)
 	go func() {
 		defer close(out)
 		for i := 0; i < len(seeds); i += 2 {
@@ -214,11 +214,12 @@ func getPhase2Seeds() <-chan int {
 	return out
 }
 
-func getAnswer() int {
-	lowestLocationNumber := -1
+func getAnswer() uint64 {
+	var lowestLocationNumber uint64
+	firstSet := true
 
 	for seed := range getPhase1Seeds() {
-		curK := seed
+		curK := uint64(seed)
 		for i, name := range findSeqs {
 			if i == len(findSeqs)-1 {
 				break
@@ -231,7 +232,8 @@ func getAnswer() int {
 				}
 			}
 		}
-		if curK < lowestLocationNumber || lowestLocationNumber == -1 {
+		if curK < lowestLocationNumber || firstSet {
+			firstSet = false
 			lowestLocationNumber = curK
 		}
 	}
@@ -241,7 +243,7 @@ func getAnswer() int {
 
 // getAnswerOptimaze
 // 将所有操作都使用区间（交集，差集，合并），最后得出所有location的区间(排序后的)，每一个区间的start就是结果
-func getAnswerOptimaze() int {
+func getAnswerOptimaze() uint64 {
 	// seeds-ranges.intersection(cur-level-ranges)=tmp-ranges
 	// calculate next-level-offset-ranges
 	// seeds-ranges.difference(tmp-ranges) = diff-seeds-ranges
