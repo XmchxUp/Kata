@@ -37,6 +37,7 @@ type Range struct {
 	Start, End uint64
 }
 
+// Ranges need sort
 type Ranges []Range
 
 func (r Ranges) Empty() bool {
@@ -104,20 +105,24 @@ func (r Ranges) Difference(other Ranges) Ranges {
 	result := Ranges{}
 
 	for _, ra := range r {
+		currentStart := ra.Start
+
 		for _, rb := range other {
-			if ra.End > rb.Start && rb.End > ra.Start { // overlaping
-				if rb.Start > ra.Start {
-					result = append(result, Range{Start: ra.Start, End: rb.Start})
+			if rb.Start <= currentStart && rb.End > currentStart {
+				currentStart = rb.End
+			} else if rb.Start > currentStart && rb.Start < ra.End {
+				if currentStart < rb.Start {
+					result = append(result, Range{Start: currentStart, End: rb.Start})
 				}
-				if rb.End < ra.End {
-					ra.Start = rb.End
-				} else {
-					ra.Start = ra.End
-				}
+				currentStart = rb.End
+			}
+			if currentStart >= ra.End {
+				break
 			}
 		}
-		if ra.Start < ra.End {
-			result = append(result, ra)
+
+		if currentStart < ra.End {
+			result = append(result, Range{Start: currentStart, End: ra.End})
 		}
 	}
 
@@ -293,10 +298,12 @@ func getAnswerOptimaze() uint64 {
 							End:   r.End + diff,
 						},
 					})
+					break
 				}
 			}
 		}
 		fmt.Println("allNextLevelRanges:", allNextLevelRanges)
+		(&tmpRanges).merge()
 		diffRanges := currentRanges.Difference(tmpRanges)
 
 		fmt.Println("diff ranges:", diffRanges)
@@ -313,6 +320,14 @@ func rangeTest() {
 	fmt.Println(r1.Union(r2))
 	fmt.Println(r1.Intersection(r2))
 	fmt.Println(r1.Difference(r2))
+
+	a := Ranges{{Start: 1, End: 10}, {Start: 20, End: 30}}
+	b := Ranges{{Start: 5, End: 15}, {Start: 25, End: 35}}
+
+	fmt.Println(a.Difference(b))
+	b = Ranges{}
+	fmt.Println(a.Difference(b))
+
 }
 
 func main() {
