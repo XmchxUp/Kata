@@ -51,7 +51,41 @@ func NewHand(cards []Card, bid int) *Hand {
 }
 
 func (h *Hand) updateType() {
+	m := make(map[string]int, 0)
 
+	for _, c := range h.Cards {
+		m[string(c)] += 1
+	}
+
+	if len(m) == 1 {
+		h.CCT = FiveOfAKind
+	} else if len(m) == 5 {
+		h.CCT = HighCard
+	} else if len(m) == 4 {
+		h.CCT = OnePair
+	} else {
+		pairCnt := 0
+		hasThree := false
+
+		for _, v := range m {
+			if v == 3 {
+				hasThree = true
+			} else if v == 2 {
+				pairCnt += 1
+			} else if v == 4 {
+				h.CCT = FourOfAKind
+				break
+			}
+		}
+
+		if hasThree && pairCnt == 1 {
+			h.CCT = FullHouse
+		} else if pairCnt == 2 {
+			h.CCT = TwoPair
+		} else if hasThree {
+			h.CCT = ThreeOfAKind
+		}
+	}
 }
 
 func (h *Hand) Compare(another *Hand) bool {
@@ -105,7 +139,6 @@ func getAnswer() int {
 }
 
 func main() {
-
 	s := bufio.NewScanner(os.Stdin)
 	for s.Scan() {
 		line := s.Text()
