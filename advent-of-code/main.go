@@ -3,18 +3,12 @@ package main
 import "fmt"
 
 type A struct {
-	B int
-}
-
-var a [1]A
-
-func tet(c [1]A) {
-	c[0].B = 2
+	x, y int
 }
 
 func main() {
 
-	a[0] = A{B: 1}
-	tet(a)
-	fmt.Println(a[0].B)
+	a := A{1, 2}
+	fmt.Println(a == A{2, 2})
+	fmt.Println(a == A{1, 2})
 }
