@@ -27,7 +27,7 @@ func (p Position) Move(dir Direction) Position {
 }
 
 func (p Position) IsIllegal() bool {
-	return !(p.x < 0 || p.y < 0 || p.x >= width || p.y >= cntLine)
+	return p.x < 0 || p.y < 0 || p.x >= width || p.y >= cntLine
 }
 
 type PipeType uint8
@@ -107,7 +107,7 @@ func parse(input string) {
 	cntLine += 1
 }
 
-func getAnswer() int {
+func getPhase1() int {
 	res := 0
 
 	q := []Position{}
@@ -119,7 +119,7 @@ func getAnswer() int {
 	dirs := []Direction{N, W, S, E}
 	for _, dir := range dirs {
 		nextPos := curP.Move(dir)
-		if !nextPos.IsIllegal() || visited[nextPos] {
+		if nextPos.IsIllegal() || visited[nextPos] {
 			continue
 		}
 
@@ -129,9 +129,11 @@ func getAnswer() int {
 		}
 
 		nextPipe.CalculateNextPosition(curP)
+		if nextPipe.NextPosition() == nil { // can't use pipe
+			continue
+		}
 
 		visited[nextPos] = true
-
 		q = append(q, nextPos)
 	}
 
@@ -141,20 +143,21 @@ func getAnswer() int {
 		for _, curPos := range q {
 			curPipe, ok := m[curPos]
 			if !ok {
-
 				continue
 			}
 
 			nextPos := curPipe.NextPosition()
 
-			if nextPos != nil && !visited[*nextPos] && nextPos.IsIllegal() {
-				if nextPipe, ok := m[*nextPos]; ok {
-					nextPipe.CalculateNextPosition(curPos)
-				}
-
-				visited[*nextPos] = true
-				tmpQ = append(tmpQ, *nextPos)
+			if nextPos == nil || visited[*nextPos] || nextPos.IsIllegal() {
+				continue
 			}
+
+			if nextPipe, ok := m[*nextPos]; ok {
+				nextPipe.CalculateNextPosition(curPos)
+			}
+
+			visited[*nextPos] = true
+			tmpQ = append(tmpQ, *nextPos)
 		}
 
 		q = tmpQ
@@ -187,5 +190,5 @@ func main() {
 		parse(input)
 	}
 
-	fmt.Println(getAnswer())
+	fmt.Println(getPhase1())
 }
