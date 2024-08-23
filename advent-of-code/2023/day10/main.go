@@ -27,7 +27,7 @@ func (p Position) Move(dir Direction) Position {
 }
 
 func (p Position) IsIllegal() bool {
-	return p.x < 0 || p.y < 0 || p.x >= width || p.y >= cntLine
+	return p.x < 0 || p.y < 0 || p.x >= width || p.y >= height
 }
 
 type PipeType uint8
@@ -69,10 +69,12 @@ const (
 	E
 )
 
-var cntLine = 0
+var height = 0
 var width = 0
-var m = make(map[Position]*Pipe)
+var pipes = make(map[Position]*Pipe)
 var start Position
+var grid [][]rune
+var dirs = []Direction{N, W, S, E}
 
 func parse(input string) {
 	if width != 0 && width != len(input) {
@@ -81,30 +83,33 @@ func parse(input string) {
 		width = len(input)
 	}
 
+	row := make([]rune, width)
 	for x, ch := range input {
-		p := Position{x, cntLine}
+		p := Position{x, height}
+		row[x] = ch
 		switch ch {
 		case '|':
-			m[p] = &Pipe{p1: p.Move(N), p2: p.Move(S), typ: VerticalPipe}
+			pipes[p] = &Pipe{p1: p.Move(N), p2: p.Move(S), typ: VerticalPipe}
 		case '-':
-			m[p] = &Pipe{p1: p.Move(W), p2: p.Move(E), typ: HorizontalPipe}
+			pipes[p] = &Pipe{p1: p.Move(W), p2: p.Move(E), typ: HorizontalPipe}
 		case 'L':
-			m[p] = &Pipe{p1: p.Move(N), p2: p.Move(E), typ: NEBend}
+			pipes[p] = &Pipe{p1: p.Move(N), p2: p.Move(E), typ: NEBend}
 		case 'J':
-			m[p] = &Pipe{p1: p.Move(N), p2: p.Move(W), typ: NWBend}
+			pipes[p] = &Pipe{p1: p.Move(N), p2: p.Move(W), typ: NWBend}
 		case '7':
-			m[p] = &Pipe{p1: p.Move(S), p2: p.Move(W), typ: SWBend}
+			pipes[p] = &Pipe{p1: p.Move(S), p2: p.Move(W), typ: SWBend}
 		case 'F':
-			m[p] = &Pipe{p1: p.Move(S), p2: p.Move(E), typ: SEBend}
+			pipes[p] = &Pipe{p1: p.Move(S), p2: p.Move(E), typ: SEBend}
 		case '.':
 			continue
 		case 'S':
-			start = Position{x, cntLine}
+			start = Position{x, height}
 		default:
 			panic("unknow flag")
 		}
 	}
-	cntLine += 1
+	grid = append(grid, row)
+	height += 1
 }
 
 func getPhase1() int {
@@ -116,14 +121,13 @@ func getPhase1() int {
 	visited := make(map[Position]bool, 0)
 	visited[curP] = true
 
-	dirs := []Direction{N, W, S, E}
 	for _, dir := range dirs {
 		nextPos := curP.Move(dir)
 		if nextPos.IsIllegal() || visited[nextPos] {
 			continue
 		}
 
-		nextPipe, ok := m[nextPos]
+		nextPipe, ok := pipes[nextPos]
 		if !ok {
 			continue
 		}
@@ -141,7 +145,7 @@ func getPhase1() int {
 		tmpQ := []Position{}
 
 		for _, curPos := range q {
-			curPipe, ok := m[curPos]
+			curPipe, ok := pipes[curPos]
 			if !ok {
 				continue
 			}
@@ -152,7 +156,7 @@ func getPhase1() int {
 				continue
 			}
 
-			if nextPipe, ok := m[*nextPos]; ok {
+			if nextPipe, ok := pipes[*nextPos]; ok {
 				nextPipe.CalculateNextPosition(curPos)
 			}
 
@@ -165,6 +169,103 @@ func getPhase1() int {
 	}
 
 	return res
+}
+
+func getPhase2() int {
+	fmt.Println(width, height)
+	visited := make(map[Position]bool)
+
+	for y := 0; y < height; y++ {
+		if grid[y][0] == '.' {
+			floodFill(Position{x: 0, y: y}, visited)
+		}
+		if grid[y][width-1] == '.' {
+			floodFill(Position{x: width - 1, y: y}, visited)
+		}
+	}
+
+	for x := 0; x < width; x++ {
+		if grid[0][x] == '.' {
+			floodFill(Position{x: x, y: 0}, visited)
+		}
+		if grid[height-1][x] == '.' {
+			floodFill(Position{x: x, y: height - 1}, visited)
+		}
+	}
+
+	floodFill(start, visited)
+
+	res := 0
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			pos := Position{x, y}
+			if grid[y][x] == '.' && !visited[pos] {
+				fmt.Printf("?")
+				res++
+			} else {
+				fmt.Printf(".")
+			}
+		}
+		fmt.Println()
+	}
+
+	return res
+}
+
+func floodFill(p Position, visited map[Position]bool) {
+	if p.IsIllegal() || visited[p] {
+		return
+	}
+
+	q := []Position{p}
+	visited[p] = true
+	fmt.Println("start ", p)
+
+	for len(q) > 0 {
+		fmt.Println(q)
+		cur := q[0]
+		q = q[1:]
+
+		for _, dir := range dirs {
+			nextPos := cur.Move(dir)
+			if nextPos.IsIllegal() || visited[nextPos] {
+				continue
+			}
+
+			if pipe, ok := pipes[nextPos]; ok {
+				pipe.CalculateNextPosition(cur)
+				pipeExitP := pipe.NextPosition()
+
+				tmpVisisted := make(map[Position]bool)
+				tmpVisisted[nextPos] = true
+
+				// 一直使用管道，看看能否找到一个点
+				found := false
+				for {
+					if pipeExitP == nil || tmpVisisted[*pipeExitP] || pipeExitP.IsIllegal() {
+						break
+					}
+
+					if pp, ok := pipes[*pipeExitP]; ok {
+						tmpVisisted[*pipeExitP] = true
+						pp.CalculateNextPosition(*pipeExitP)
+						pipeExitP = pp.NextPosition()
+					} else {
+						found = true
+						break
+					}
+				}
+
+				if found {
+					visited[*pipeExitP] = true
+					q = append(q, *pipeExitP)
+				}
+			} else {
+				visited[nextPos] = true
+				q = append(q, nextPos)
+			}
+		}
+	}
 }
 
 func main() {
@@ -190,5 +291,6 @@ func main() {
 		parse(input)
 	}
 
-	fmt.Println(getPhase1())
+	// fmt.Println(getPhase1())
+	fmt.Println(getPhase2())
 }
