@@ -8,31 +8,45 @@ import (
 	"strings"
 )
 
+type Point struct {
+	x  int
+	y  int
+	ch byte
+}
+
 type Galaxy struct {
-	x int
-	y int
+	Point
 }
 
 func (g Galaxy) shortPathWith(ga Galaxy) int {
 	return int(math.Abs(float64(g.x-ga.x)) + math.Abs(float64(g.y-ga.y)))
 }
 
-var width int = 0
+var epHeight int = 0
 var height int = 0
 
-var universe [][]byte
+var universe [][]*Point
 var galaxies []Galaxy
 
+// part 1
+// const expansionTimes = 2
+// const expansionTimes = 10
+// const expansionTimes = 100
+
+// part2
+const expansionTimes = 1_000_000
+
 func init() {
-	universe = make([][]byte, 0)
+	universe = make([][]*Point, 0)
 }
 
 func checkAndExpansionWidth() {
 	tmpWidths := []int{}
+	width := len(universe[0])
 	for i := 0; i < width; i++ {
 		hasGalaxy := false
 		for j := 0; j < height; j++ {
-			if universe[j][i] == '#' {
+			if universe[j][i].ch == '#' {
 				hasGalaxy = true
 				break
 			}
@@ -42,41 +56,23 @@ func checkAndExpansionWidth() {
 		}
 	}
 
-	newUniverse := make([][]byte, height)
-	newWidth := width + len(tmpWidths)
-	for i := range newUniverse {
-		newUniverse[i] = make([]byte, newWidth)
-	}
-
-	ni := 0
-	idx := 0
-
-	for i := 0; i < width; i++ {
-		for j := 0; j < height; j++ {
-			newUniverse[j][ni] = universe[j][i]
-		}
-		ni += 1
-
-		if idx < len(tmpWidths) && tmpWidths[idx] == i {
+	for _, i := range tmpWidths {
+		for ni := i; ni < width; ni++ {
 			for j := 0; j < height; j++ {
-				newUniverse[j][ni] = universe[j][i]
+				universe[j][ni].x += (expansionTimes - 1)
 			}
-			idx++
-			ni += 1
 		}
 	}
-
-	universe = newUniverse
-	width = newWidth
 }
 
 func getAnswerPhase1() int {
 	checkAndExpansionWidth()
 
-	for j := 0; j < height; j++ {
-		for i := 0; i < width; i++ {
-			if universe[j][i] == '#' {
-				galaxies = append(galaxies, Galaxy{x: i, y: j})
+	for i := range universe {
+		for j := range universe[i] {
+			if universe[i][j].ch == '#' {
+				galaxies = append(galaxies, Galaxy{*universe[i][j]})
+				// fmt.Println(universe[i][j].x, universe[i][j].y)
 			}
 		}
 	}
@@ -113,20 +109,19 @@ func main() {
 }
 
 func parse(input string) {
-	if width == 0 {
-		width = len(input)
-	}
-
 	hasGalaxy := strings.ContainsAny(input, "#")
-	tmp := []byte(input)
 
+	universe = append(universe, []*Point{})
+
+	for i, ch := range input {
+		universe[height] = append(universe[height], &Point{x: i, y: epHeight, ch: byte(ch)})
+
+	}
+	height += 1
 	if hasGalaxy {
-		universe = append(universe, tmp)
-		height += 1
+		epHeight += 1
 	} else {
 		// expansion height
-		universe = append(universe, tmp)
-		universe = append(universe, tmp)
-		height += 2
+		epHeight += expansionTimes
 	}
 }
