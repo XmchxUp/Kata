@@ -1,28 +1,23 @@
-use chrono::Datelike;
-use std::{collections::HashMap, env, process::exit, time::Instant};
-
 mod day12;
 
+use std::collections::HashMap;
+
+use aoclib::{Runner, Selector};
+use day12::*;
+
 fn main() {
-    let mut days: HashMap<usize, fn()> = HashMap::new();
-    days.insert(12, day12::day12);
+    let day12 = Aoc2023_12::new();
+    let mut days: HashMap<usize, Box<dyn Runner>> = HashMap::new();
+    days.insert(12, Box::new(day12));
 
-    let args: Vec<String> = env::args().collect();
-    let today = chrono::Local::now();
+    let which = Selector::One(12);
 
-    let mut which_day = today.day() as usize - 1;
-    if args.len() != 2 {
-        println!("./aoc2023 which_day");
-        exit(-1);
-    } else if let Ok(day) = args[1].parse::<usize>() {
-        which_day = day;
+    match which {
+        Selector::All => todo!(),
+        Selector::One(d) => {
+            let day = days.get_mut(&d).unwrap();
+            aoclib::run(day.as_mut());
+        }
+        Selector::Last => todo!(),
     }
-
-    let now = Instant::now();
-    (days.get(&which_day).unwrap())();
-    let elasped = now.elapsed();
-    println!(
-        "-- Completion time: {:6.2}ms",
-        elasped.as_micros() as f64 / 1000.
-    )
 }
