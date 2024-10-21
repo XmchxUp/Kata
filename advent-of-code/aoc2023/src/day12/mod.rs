@@ -21,7 +21,7 @@ impl Runner for Aoc2023_12 {
     }
 
     fn parse(&mut self) {
-        let lines = aoclib::utils::read_file("./inputs/input_23.txt");
+        let lines = aoclib::utils::read_file("./inputs/input_12.txt");
         for line in lines.iter() {
             self.springs.push(line.parse().unwrap());
         }
