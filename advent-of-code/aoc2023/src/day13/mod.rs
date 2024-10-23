@@ -17,12 +17,14 @@ impl Runner for Aoc2023_13 {
     }
 
     fn parse(&mut self) {
-        let lines = aoclib::utils::read_file("./inputs/test_13.txt");
+        let lines = aoclib::utils::read_file("./inputs/input_13.txt");
 
         let mut tmp = vec![];
         for line in lines.iter() {
             if line.trim().is_empty() {
-                self.patterns.push((&tmp).into());
+                if let Ok(v) = (&tmp).try_into() {
+                    self.patterns.push(v);
+                }
                 tmp.clear();
                 continue;
             }
@@ -30,7 +32,9 @@ impl Runner for Aoc2023_13 {
         }
 
         if !tmp.is_empty() {
-            self.patterns.push((&tmp).into());
+            if let Ok(v) = (&tmp).try_into() {
+                self.patterns.push(v);
+            }
         }
     }
 
@@ -51,63 +55,83 @@ struct Pattern {
     mirror_idx: usize,
 }
 
-impl From<&Vec<&String>> for Pattern {
-    fn from(value: &Vec<&String>) -> Self {
+impl TryFrom<&Vec<&String>> for Pattern {
+    type Error = String;
+
+    fn try_from(value: &Vec<&String>) -> Result<Self, Self::Error> {
         let rows = value.len();
         let cols = value.get(0).unwrap().len();
         let mut is_hor_reflect = false;
 
         //  check horizontal
         let mut mirror_idx = rows;
-        for r in 0..rows - 1 {
-            let cur_line = value.get(r).unwrap();
-            assert_eq!(cols, cur_line.len());
-            for nr in r + 1..rows {
-                if cur_line == value.get(nr).unwrap() {
-                    mirror_idx = r;
+        for r in 1..rows / 2 + 1 {
+            let nr = r + 1;
+            if value[r] != value[nr] {
+                continue;
+            }
+            let mut i = r - 1;
+            let mut j = nr + 1;
+            while i != 0 && j < rows {
+                if value[i] != value[j] {
                     break;
                 }
+                i -= 1;
+                j += 1;
             }
-            if mirror_idx != rows {
+            if i == 0 && j == rows {
                 is_hor_reflect = true;
+                mirror_idx = r;
                 break;
             }
         }
 
         if !is_hor_reflect {
             // check verctial
-            for c in 0..cols - 1 {
-                let mut cur_line = String::new();
-                for r in 0..rows {
-                    let tmp = value.get(r).unwrap();
-                    cur_line.push(tmp.chars().nth(c).unwrap());
+            let columns: Vec<Vec<char>> = (0..cols)
+                .into_iter()
+                .map(|c| {
+                    value
+                        .iter()
+                        .map(|row| row.chars().nth(c).unwrap())
+                        .collect()
+                })
+                .collect();
+
+            for c in 1..cols / 2 + 1 {
+                let nc = c + 1;
+                if columns[c] != columns[nc] {
+                    continue;
                 }
 
-                for nc in c..cols {
-                    let mut tmp_line = String::new();
-                    for r in 0..rows {
-                        let tmp = value.get(r).unwrap();
-                        tmp_line.push(tmp.chars().nth(nc).unwrap());
-                    }
-
-                    if tmp_line == cur_line {
-                        mirror_idx = c;
+                let mut i = c - 1;
+                let mut j = nc + 1;
+                while i != 0 && j < cols {
+                    if columns[i] != columns[j] {
                         break;
                     }
+                    i -= 1;
+                    j += 1;
                 }
-                if mirror_idx != rows {
+                if i == 0 && j == cols {
+                    is_hor_reflect = false;
+                    mirror_idx = c;
                     break;
                 }
             }
         }
 
-        assert_ne!(mirror_idx, rows);
+        if mirror_idx == rows {
+            return Err("not found mirror".to_string());
+            // println!("{:?}", value);
+        }
+        // assert_ne!(mirror_idx, rows, "not found mirror");
 
-        Pattern {
+        Ok(Pattern {
             rows,
             cols,
             is_hor_reflect,
             mirror_idx,
-        }
+        })
     }
 }
