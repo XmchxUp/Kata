@@ -22,24 +22,23 @@ impl Runner for Aoc2023_13 {
         let mut tmp = vec![];
         for line in lines.iter() {
             if line.trim().is_empty() {
-                if let Ok(v) = (&tmp).try_into() {
-                    self.patterns.push(v);
-                }
+                self.patterns.push((&tmp).into());
                 tmp.clear();
                 continue;
             }
-            tmp.push(line);
+            tmp.push(line.clone());
         }
 
         if !tmp.is_empty() {
-            if let Ok(v) = (&tmp).try_into() {
-                self.patterns.push(v);
-            }
+            self.patterns.push((&tmp).into());
         }
     }
 
     fn part1(&mut self) -> Vec<String> {
-        vec![format!("{:?}", self.patterns)]
+        vec![format!(
+            "{}",
+            self.patterns.iter().map(|p| p.score).sum::<usize>()
+        )]
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -49,89 +48,108 @@ impl Runner for Aoc2023_13 {
 
 #[derive(Debug)]
 struct Pattern {
-    rows: usize,
-    cols: usize,
-    is_hor_reflect: bool,
-    mirror_idx: usize,
+    pub score: usize,
 }
 
-impl TryFrom<&Vec<&String>> for Pattern {
-    type Error = String;
-
-    fn try_from(value: &Vec<&String>) -> Result<Self, Self::Error> {
+impl From<&Vec<String>> for Pattern {
+    fn from(value: &Vec<String>) -> Self {
+        let mut score = 0;
         let rows = value.len();
         let cols = value.get(0).unwrap().len();
-        let mut is_hor_reflect = false;
 
         //  check horizontal
-        let mut mirror_idx = rows;
-        for r in 1..rows / 2 + 1 {
-            let nr = r + 1;
-            if value[r] != value[nr] {
+        for r in 1..rows {
+            if value[r] != value[r - 1] {
                 continue;
             }
-            let mut i = r - 1;
-            let mut j = nr + 1;
-            while i != 0 && j < rows {
-                if value[i] != value[j] {
+
+            let mut i = (r - 1) as i32;
+            let mut j = r;
+            let mut found = true;
+            while i >= 0 && j < rows {
+                if value[i as usize] != value[j] {
+                    found = false;
                     break;
                 }
                 i -= 1;
                 j += 1;
             }
-            if i == 0 && j == rows {
-                is_hor_reflect = true;
-                mirror_idx = r;
+
+            if found {
+                score += 100 * r;
                 break;
             }
         }
 
-        if !is_hor_reflect {
-            // check verctial
-            let columns: Vec<Vec<char>> = (0..cols)
-                .into_iter()
-                .map(|c| {
-                    value
-                        .iter()
-                        .map(|row| row.chars().nth(c).unwrap())
-                        .collect()
-                })
-                .collect();
+        // check verctial
+        let columns: Vec<Vec<char>> = (0..cols)
+            .into_iter()
+            .map(|c| {
+                value
+                    .iter()
+                    .map(|row| row.chars().nth(c).unwrap())
+                    .collect()
+            })
+            .collect();
 
-            for c in 1..cols / 2 + 1 {
-                let nc = c + 1;
-                if columns[c] != columns[nc] {
-                    continue;
-                }
+        for c in 1..cols {
+            if columns[c] != columns[c - 1] {
+                continue;
+            }
 
-                let mut i = c - 1;
-                let mut j = nc + 1;
-                while i != 0 && j < cols {
-                    if columns[i] != columns[j] {
-                        break;
-                    }
-                    i -= 1;
-                    j += 1;
-                }
-                if i == 0 && j == cols {
-                    is_hor_reflect = false;
-                    mirror_idx = c;
+            let mut i = (c - 1) as i32;
+            let mut j = c;
+            let mut found = true;
+            while i >= 0 && j < cols {
+                if columns[i as usize] != columns[j] {
+                    found = false;
                     break;
                 }
+                i -= 1;
+                j += 1;
+            }
+
+            if found {
+                score += c;
+                break;
             }
         }
 
-        if mirror_idx == rows {
-            return Err("not found mirror".to_string());
-            // println!("{:?}", value);
-        }
-        // assert_ne!(mirror_idx, rows, "not found mirror");
+        Pattern { score }
+    }
+}
 
-        Ok(Pattern {
-            rows,
-            cols,
-            is_hor_reflect,
-            mirror_idx,
-        })
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_1() {
+        let input: Vec<String> = vec![
+            "#.##..##.".to_string(),
+            "..#.##.#.".to_string(),
+            "##......#".to_string(),
+            "##......#".to_string(),
+            "..#.##.#.".to_string(),
+            "..##..##.".to_string(),
+            "#.#.##.#.".to_string(),
+        ];
+        let pattern: Pattern = (&input).try_into().unwrap();
+        assert_eq!(pattern.score, 5);
+    }
+
+    #[test]
+    fn test_2() {
+        let input: Vec<String> = vec![
+            "#...##..#".to_string(),
+            "#....#..#".to_string(),
+            "..##..###".to_string(),
+            "#####.##.".to_string(),
+            "#####.##.".to_string(),
+            "..##..###".to_string(),
+            "#....#..#".to_string(),
+        ];
+        let pattern: Pattern = (&input).try_into().unwrap();
+        assert_eq!(pattern.score, 400);
     }
 }
