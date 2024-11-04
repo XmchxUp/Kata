@@ -1,5 +1,3 @@
-use std::collections::{HashMap, HashSet};
-
 use aoclib::{utils::read_file, Runner};
 
 #[derive(Default)]
@@ -7,40 +5,35 @@ pub struct Aoc2023_14 {
     grid: Vec<Vec<char>>,
     rows: usize,
     cols: usize,
-    states: HashMap<String, usize>,
+    state_history: Vec<String>,
+    loop_cnt: usize,
 }
 
 impl Aoc2023_14 {
     pub fn new() -> Self {
-        Self::default()
-    }
-
-    fn move_cycle(&mut self, cycle: usize) -> bool {
-        let state_string = self.grid_to_string();
-        let idx = self.states.get(&state_string).or(Some(&0)).unwrap();
-        if *idx != 0 {
-            if cycle == 1 {
-                return true;
-            }
-            if cycle.is_power_of_two() && idx.is_power_of_two() {
-                return true;
-            }
+        Self {
+            grid: vec![],
+            rows: 0,
+            cols: 0,
+            state_history: vec![],
+            loop_cnt: 1000000000,
         }
-        self.states.insert(state_string, cycle);
-
-        self.move_north();
-        self.move_west();
-        self.move_south();
-        self.move_east();
-        false
     }
 
-    fn grid_to_string(&self) -> String {
+    fn grid_to_state(&self) -> String {
         self.grid
             .iter()
             .map(|row| row.iter().collect::<String>())
             .collect::<Vec<String>>()
             .join(";")
+    }
+
+    fn state_to_grid(&mut self, state: String) {
+        let rows: Vec<&str> = state.split(';').collect();
+        self.grid.resize(rows.len(), Vec::new());
+        for (i, row) in rows.iter().enumerate() {
+            self.grid[i] = row.chars().collect();
+        }
     }
 
     fn move_east(&mut self) {
@@ -141,15 +134,12 @@ impl Aoc2023_14 {
 
     fn get_score(&mut self) -> usize {
         let mut count = 0;
-
-        self.move_north();
         for (i, row) in self.grid.iter().enumerate() {
             count += row
                 .iter()
                 .map(|c| if *c == 'O' { self.rows - i } else { 0 })
                 .sum::<usize>();
         }
-
         count
     }
 }
@@ -160,7 +150,7 @@ impl Runner for Aoc2023_14 {
     }
 
     fn parse(&mut self) {
-        let lines = read_file("./inputs/test_14.txt");
+        let lines = read_file("./inputs/input_14.txt");
         self.grid = lines.into_iter().map(|s| s.chars().collect()).collect();
         self.rows = self.grid.len();
         assert!(self.rows > 0);
@@ -173,11 +163,29 @@ impl Runner for Aoc2023_14 {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        for i in 0..1000000000 {
-            if self.move_cycle(i) {
-                println!("found {}", i + 1);
+        for i in 0..self.loop_cnt {
+            self.move_north();
+            self.move_west();
+            self.move_south();
+            self.move_east();
+            let new_state = self.grid_to_state();
+
+            let mut found = false;
+            for (j, state) in self.state_history.iter().enumerate() {
+                if *state == new_state {
+                    let loop_period = i - j;
+                    let idx = (self.loop_cnt - j) % loop_period - 1;
+                    let state = self.state_history.get(idx + j).unwrap();
+                    self.state_to_grid(state.clone());
+                    found = true;
+                    break;
+                }
+            }
+
+            if found {
                 break;
             }
+            self.state_history.push(new_state);
         }
         vec![format!("{}", self.get_score())]
     }
