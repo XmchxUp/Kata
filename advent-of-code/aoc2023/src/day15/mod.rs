@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use aoclib::Runner;
 
 #[derive(Default)]
@@ -23,11 +25,11 @@ impl Runner for Aoc2023_15 {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        vec![format!("{}", self.seq.get_score())]
+        vec![format!("{}", self.seq.get_score_part1())]
     }
 
     fn part2(&mut self) -> Vec<String> {
-        todo!()
+        vec![format!("{}", self.seq.get_score_part2())]
     }
 }
 
@@ -37,17 +39,59 @@ struct Sequence {
 }
 
 impl Sequence {
-    pub fn get_score(&self) -> usize {
+    fn hash(&self, step: &String) -> usize {
         // + *17 %256
+        let mut res = 0;
+        for c in step.chars() {
+            res += c as usize;
+            res *= 17;
+            res %= 256;
+        }
+        res
+    }
+
+    pub fn get_score_part2(&self) -> usize {
+        let mut boxes: [HashMap<String, (usize, usize)>; 256] =
+            std::array::from_fn(|_| HashMap::new());
+
+        for step in &self.steps {
+            if let Some((label_part, _)) = step.split_once('-') {
+                let label = label_part.to_string();
+                let idx = self.hash(&label);
+                if let Some((_, removed_slot)) = boxes[idx].remove(&label) {
+                    for value in boxes[idx].values_mut() {
+                        if value.1 > removed_slot {
+                            value.1 -= 1;
+                        }
+                    }
+                }
+            } else if let Some((label_part, lens_part)) = step.split_once('=') {
+                let label = label_part.to_string();
+                let idx = self.hash(&label);
+                let lens: usize = lens_part.parse().expect("Invalid number in step");
+                let next_slot = boxes[idx].len() + 1;
+
+                boxes[idx]
+                    .entry(label.clone())
+                    .and_modify(|value| value.0 = lens)
+                    .or_insert_with(|| (lens, next_slot));
+            }
+        }
+        boxes
+            .iter()
+            .enumerate()
+            .map(|(idx, map)| {
+                map.iter()
+                    .map(|(_, (lens, slot))| (idx + 1) * lens * slot)
+                    .sum::<usize>()
+            })
+            .sum()
+    }
+
+    pub fn get_score_part1(&self) -> usize {
         let mut score = 0;
         for step in &self.steps {
-            let mut tmp = 0;
-            for c in step.chars() {
-                tmp += c as usize;
-                tmp *= 17;
-                tmp %= 256;
-            }
-            score += tmp;
+            score += self.hash(step);
         }
         score
     }
@@ -69,6 +113,13 @@ mod tests {
     fn test_case1() {
         let input = "rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7".to_string();
         let seq: Sequence = input.into();
-        assert_eq!(seq.get_score(), 1320);
+        assert_eq!(seq.get_score_part1(), 1320);
+    }
+
+    #[test]
+    fn test_case2() {
+        let input = "rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7".to_string();
+        let seq: Sequence = input.into();
+        assert_eq!(seq.get_score_part2(), 145);
     }
 }

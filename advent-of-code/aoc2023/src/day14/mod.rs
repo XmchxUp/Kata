@@ -193,7 +193,6 @@ impl Runner for Aoc2023_14 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_1() {}
