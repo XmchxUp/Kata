@@ -21,7 +21,7 @@ impl Runner for Aoc2023_15 {
     fn parse(&mut self) {
         let inputs = aoclib::utils::read_file("./inputs/input_15.txt");
         assert_eq!(inputs.len(), 1);
-        self.seq = inputs.get(0).unwrap().clone().into();
+        self.seq = inputs.first().unwrap().clone().into();
     }
 
     fn part1(&mut self) -> Vec<String> {
@@ -39,7 +39,7 @@ struct Sequence {
 }
 
 impl Sequence {
-    fn hash(&self, step: &String) -> usize {
+    fn hash(&self, step: &str) -> usize {
         // + *17 %256
         let mut res = 0;
         for c in step.chars() {
@@ -100,7 +100,7 @@ impl Sequence {
 impl From<String> for Sequence {
     fn from(value: String) -> Self {
         let steps = value.split(',').map(|s| s.to_string()).collect();
-        Self { steps: steps }
+        Self { steps }
     }
 }
 
