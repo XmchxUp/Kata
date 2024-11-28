@@ -41,6 +41,61 @@ impl Aoc2023_19 {
             }
         }
     }
+
+    fn count(&self, ranges: HashMap<char, (i32, i32)>, name: &str) -> u64 {
+        match name {
+            "R" => 0,
+            "A" => {
+                let mut product = 1;
+                for (lo, hi) in ranges.values() {
+                    product *= (hi - lo + 1) as u64;
+                }
+                product
+            }
+            _ => {
+                let (rules, fallback) = &self.workflows[name];
+                let mut total = 0;
+                let mut need_fallback = true;
+                let mut curret_ranges = ranges;
+
+                for (key, cmp, n, target) in rules {
+                    let (lo, hi) = curret_ranges.get(key).unwrap();
+                    let mut true_range = (0, 0);
+                    let mut false_range = (0, 0);
+                    if *cmp == '<' {
+                        true_range = (*lo, *n - 1);
+                        false_range = (*n, *hi);
+                    } else if *cmp == '>' {
+                        true_range = (*n + 1, *hi);
+                        false_range = (*lo, *n);
+                    } else {
+                        panic!("error operator");
+                    }
+
+                    if true_range.0 <= true_range.1 {
+                        let mut copy = curret_ranges.clone();
+                        copy.insert(*key, true_range);
+                        total += self.count(copy, target);
+                    }
+
+                    if false_range.0 <= false_range.1 {
+                        // 更新当前ranges为false_range
+                        let mut copy = curret_ranges.clone();
+                        copy.insert(*key, false_range);
+                        curret_ranges = copy;
+                    } else {
+                        //如果都没有match则走fallback
+                        need_fallback = false;
+                        break;
+                    }
+                }
+                if need_fallback {
+                    total += self.count(curret_ranges, fallback)
+                }
+                total
+            }
+        }
+    }
 }
 
 impl Runner for Aoc2023_19 {
@@ -106,6 +161,10 @@ impl Runner for Aoc2023_19 {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        todo!()
+        let mut ranges = HashMap::new();
+        for ch in "xmas".chars() {
+            ranges.insert(ch, (1, 4000));
+        }
+        vec![format!("{}", self.count(ranges, "in"))]
     }
 }
