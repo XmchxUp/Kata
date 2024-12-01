@@ -18,6 +18,18 @@ mod day18;
 use day18::*;
 mod day19;
 use day19::*;
+mod day20;
+use day20::*;
+mod day21;
+use day21::*;
+mod day22;
+use day22::*;
+mod day23;
+use day23::*;
+mod day24;
+use day24::*;
+mod day25;
+use day25::*;
 
 fn main() {
     let day12 = Aoc2023_12::new();
@@ -28,6 +40,10 @@ fn main() {
     let day17 = Aoc2023_17::new();
     let day18 = Aoc2023_18::new();
     let day19 = Aoc2023_19::new();
+    let day20 = Aoc2023_20::new();
+    let day21 = Aoc2023_21::new();
+    let day22 = Aoc2023_22::new();
+    let day22 = Aoc2023_22::new();
     let mut days: HashMap<usize, Box<dyn Runner>> = HashMap::new();
     days.insert(12, Box::new(day12));
     days.insert(13, Box::new(day13));
@@ -37,8 +53,9 @@ fn main() {
     days.insert(17, Box::new(day17));
     days.insert(18, Box::new(day18));
     days.insert(19, Box::new(day19));
+    days.insert(20, Box::new(day20));
 
-    let which = Selector::One(19);
+    let which = Selector::One(20);
 
     match which {
         Selector::All => todo!(),
