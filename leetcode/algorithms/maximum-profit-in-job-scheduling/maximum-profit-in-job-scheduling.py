@@ -6,6 +6,18 @@ class Solution:
     def jobScheduling(
         self, startTime: List[int], endTime: List[int], profit: List[int]
     ) -> int:
+        jobs = sorted(zip(endTime, startTime, profit))
+        f = [0] * (len(jobs) + 1)
+
+        for i, (_, st, p) in enumerate(jobs):
+            j = bisect.bisect_left(jobs, (st + 1,), hi=i)
+            f[i + 1] = max(f[i], f[j] + p)
+
+        return f[-1]
+
+    def jobScheduling2(
+        self, startTime: List[int], endTime: List[int], profit: List[int]
+    ) -> int:
         """
         DFS搜索: 对当前i job是否选或不选两种情况遍历。
         """
