@@ -1,3 +1,6 @@
 *.out
 .vscode/
 target/
+
+leetcode/python/*
+leetgo.yaml
